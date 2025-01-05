@@ -1,4 +1,3 @@
-import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Welcome from "./pages/welcome";
 import Pokedex from "./pages/pokedex";

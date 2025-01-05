@@ -1,16 +1,20 @@
-import React from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import Button from "@mui/material/Button";
+
 const Welcome = () => {
   return (
-    <div className="App">
-      <div className="container d-flex justify-content-center align-items-center">
-        <h1>Welcome to PokeWeb!</h1>
+    <div className="App h-100 d-flex justify-content-center align-items-center bg-dark text-light">
+      <div className="container d-flex flex-column justify-content-center align-items-center">
+        <h1>Bienvenido a PokeWeb!</h1>
         <p>
-          This is a simple React application that displays a list of Pokémon.
+          Esta es una aplicacion simple de React que permite visualizar la
+          informacion de los pokemon.
         </p>
-        <p>Click on a Pokémon's name to see more details.</p>
-        <p>Powered by Vite and React.</p>
-        <a href="https://github.com/kevinfeng7/PokeWeb" target="_blank">
-          View the source code on GitHub
+        <p>Da click al pokemon cuyos detalles desees ver.</p>
+        <a href="/Pokedex">
+          <Button variant="contained" color="primary">
+            Comienza {">"}
+          </Button>
         </a>
       </div>
     </div>
