@@ -1,51 +1,61 @@
-import Button from "@mui/material/Button";
-
+import { useNavigate } from "react-router";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardMedia from "@mui/material/CardMedia";
+import Typography from "@mui/material/Typography";
+import CardActionArea from "@mui/material/CardActionArea";
 interface PokeCardProps {
   name: string;
   number: number;
   image: string;
 }
+ const PokeCard = ({ name, number, image }: PokeCardProps) => {
+  const navigate = useNavigate();
 
-const PokeCard = ({ name, number, image }: PokeCardProps) => {
   const formattedNumber = number.toString().padStart(3, "0");
 
+  const handleNavigate = () => {
+    navigate(`/pokemon/${number}`);
+  };
+
   return (
-    <div
-      className="card shadow-sm rounded border-0"
-      style={{ maxWidth: "18rem" }}
+    <Card
+      sx={{ maxWidth: 345 }}
+      onClick={handleNavigate}
+      style={{
+        background: "transparent",
+        backdropFilter: "blur(10px)",
+        borderRadius: "8px",
+        boxShadow: "rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px",
+      }}
+      
     >
-      <img
-        src={image}
-        className="card-img-top rounded-top"
-        style={{
-          aspectRatio: "1/1",
-          objectFit: "cover",
-          filter: "drop-shadow(5px 5px 13px #111111)",
-        }}
-        alt={`Imagen de ${name}`}
-      />
-      <div className="card-body d-flex flex-column justify-content-between">
-        <h5
-          className="card-title text-center text-uppercase"
-          style={{ fontWeight: "bold" }}
-        >
-          {name}
-        </h5>
-        <p
-          className="card-text text-center"
-          style={{ fontSize: "1.2rem", color: "#666" }}
-        >
-          # {formattedNumber}
-        </p>
-        <div className="d-flex justify-content-center">
-          <a href="/pokemon/{number}" className="w-100">
-            <Button variant="contained" className="w-100 bg-dark">
-              Ver mas
-            </Button>
-          </a>
-        </div>
-      </div>
-    </div>
+      <CardActionArea>
+        <CardMedia
+          component="img"
+          image={image}
+          style={{
+            aspectRatio: "1/1",
+            objectFit: "cover",
+            filter: "drop-shadow(5px 5px 13px #111111)",
+          }}
+          alt={`Imagen de ${name}`}
+        />
+        <CardContent className="d-flex flex-column align-items-center">
+          <Typography
+            gutterBottom
+            variant="h5"
+            component="div"
+            className="text-capitalize"
+          >
+            {name}
+          </Typography>
+          <Typography variant="h6" sx={{ color: "text.secondary" }}>
+            #{formattedNumber}
+          </Typography>
+        </CardContent>
+      </CardActionArea>
+    </Card>
   );
 };
 

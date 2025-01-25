@@ -24,7 +24,10 @@ const Pokedex = () => {
           return {
             name: pokemonDetails.data.name,
             id: pokemonDetails.data.id,
-            image: pokemonDetails.data.sprites.front_default,
+            image:
+              pokemonDetails.data.sprites.front_default ||
+              pokemonDetails.data.sprites.other?.["official-artwork"]
+                ?.front_default,
           };
         })
       );
@@ -40,11 +43,23 @@ const Pokedex = () => {
   }, []);
 
   return (
-    <div className="App bg-dark text-light p-3">
+    <div className="App bg-light">
+      <div
+        className="text-center p-3"
+        style={{
+          background: " #590209",
+          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+          marginBottom: "2rem",
+        }}
+      >
+        <img
+          src="https://raw.githubusercontent.com/PokeAPI/media/master/logo/pokeapi_256.png"
+          alt="PokeAPI Logo"
+          style={{ marginBottom: "5px", aspectRatio: 1 / 1 }}
+        />
+      </div>
       <div className="container">
-        <div className="header">
-          <h1 className="text-center">Pokedex</h1>
-        </div>
+        {/* Cards de Pokémon */}
         <div className="row g-2">
           {pokemons.map((pokemon) => (
             <div className="col-12 col-md-3 col-lg-3" key={pokemon.id}>
