@@ -3,6 +3,15 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Typography from "@mui/material/Typography";
 import { Box, Chip } from "@mui/material";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import LinearProgress, {
+  linearProgressClasses,
+} from "@mui/material/LinearProgress";
+import Pagination from "@mui/material/Pagination";
+import InfoIcon from "@mui/icons-material/Info";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 
 const Pokemon = () => {
   const url = "https://pokeapi.co/api/v2/pokemon";
@@ -10,6 +19,15 @@ const Pokemon = () => {
   const [pokemonData, setPokemonData] = useState<PokemonData | null>(null);
   const [sprites, setSprites] = useState<{ key: string; value: string }[]>([]);
   const [indexAct, setIndexAct] = useState(7);
+
+  const [page, setPage] = useState(1);
+  const movesPerPage = 20;
+
+  const getStatColor = (value: number) => {
+    if (value > 100) return "#78C850";
+    if (value > 50) return "#F8D030";
+    return "#F08030";
+  };
 
   const colorXType: { [key: string]: string } = {
     bug: "#A6B91A",
@@ -30,11 +48,9 @@ const Pokemon = () => {
     rock: "#B8A038",
     steel: "#B8B8D0",
     water: "#6390F0",
-    shadow: "#3E3E3E", 
+    shadow: "#3E3E3E",
     unknown: "#68A090",
   };
-  
-
 
   interface Ability {
     ability: {
@@ -111,6 +127,43 @@ const Pokemon = () => {
     moves: Moves[];
   }
 
+  interface TabPanelProps {
+    children?: React.ReactNode;
+    index: number;
+    value: number;
+  }
+
+  function CustomTabPanel(props: TabPanelProps) {
+    const { children, value, index, ...other } = props;
+    return (
+      <div
+        role="tabpanel"
+        hidden={value !== index}
+        id={`simple-tabpanel-${index}`}
+        aria-labelledby={`simple-tab-${index}`}
+        style={{ overflow: "auto" }}
+        className="w-100"
+        {...other}
+      >
+        {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      </div>
+    );
+  }
+
+  function a11yProps(index: number) {
+    return {
+      id: `simple-tab-${index}`,
+      "aria-controls": `simple-tabpanel-${index}`,
+      className: "text-light",
+    };
+  }
+
+  const [value, setValue] = useState(0);
+
+  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+    setValue(newValue);
+  };
+
   const formattedNumber = pokemonData?.id.toString().padStart(3, "0");
 
   const getPokemonData = async (pokemonId: string) => {
@@ -160,8 +213,13 @@ const Pokemon = () => {
     }
   }, [id]);
 
+  const paginatedMoves = pokemonData?.moves.slice(
+    (page - 1) * movesPerPage,
+    page * movesPerPage
+  );
+
   return (
-    <div className="App bg-dark text-light p-3 d-flex w-100">
+    <div className="App bg-dark text-light p-3 d-flex w-100 h-100">
       {pokemonData ? (
         <div className="row w-100">
           <div className="carousel-container d-flex align-items-center">
@@ -206,35 +264,177 @@ const Pokemon = () => {
                   key={index}
                   label={type.type.name}
                   className="text-capitalize m-2"
-                  sx={{backgroundColor: colorXType[type.type.name], fontWeight: "bold" }}
+                  sx={{
+                    backgroundColor: colorXType[type.type.name],
+                    fontWeight: "bold",
+                  }}
                 />
               ))}
             </Box>
           </div>
-          <div className="mt-4">
-            <p>Altura: {pokemonData.height / 10} m</p>
-            <p>Peso: {pokemonData.weight / 10} kg</p>
-            <p>Habilidades:</p>
-            <ul>
-              {pokemonData.abilities.map((ability, index) => (
-                <li key={index}>{ability.ability.name}</li>
-              ))}
-            </ul>
-            <p>Estadísticas:</p>
+          <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+            <Tabs value={value} onChange={handleChange} centered>
+              <Tab
+                icon={<InfoIcon />}
+                label="Características"
+                {...a11yProps(0)}
+              />
+              <Tab icon={<BarChartIcon />} label="Stats" {...a11yProps(1)} />
+              <Tab
+                icon={<FitnessCenterIcon />}
+                label="Movimientos"
+                {...a11yProps(2)}
+              />
+            </Tabs>
+          </Box>
+          <CustomTabPanel value={value} index={0}>
+            <div className="row g-1">
+              <div className="col-sm-12 col-md-6 col-lg-6">
+                <Box
+                  sx={{
+                    p: 1,
+                    borderRadius: "16px",
+                    boxShadow: "0 4px 12px rgba(255, 255, 255, 0.1)",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="h5" sx={{ color: "text.light"}}>
+                    Altura
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: "#FFF",
+                      fontWeight: "bold",
+                      fontSize: "1.8rem",
+                    }}
+                  >
+                    {pokemonData.height / 10} m
+                  </Typography>
+                </Box>
+              </div>
+              <div className="col-sm-12 col-md-6 col-lg-6">
+                <Box
+                  sx={{
+                    p: 1,
+                    borderRadius: "16px",
+                    boxShadow: "0 4px 12px rgba(255, 255, 255, 0.1)",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="h5" sx={{ color: "text.light" }}>
+                    Peso
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: "#FFF",
+                      fontWeight: "bold",
+                      fontSize: "1.8rem",
+                    }}
+                  >
+                    {pokemonData.weight / 10} kg
+                  </Typography>
+                </Box>
+              </div>
+              <div className="col-12 p-3">
+                <Box
+                  sx={{
+                    p: 1,
+                    borderRadius: "16px",
+                    boxShadow: "0 4px 12px rgba(255, 255, 255, 0.1)",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      color: "text.light",
+                      mb: 1,
+                    }}
+                  >
+                    Habilidades
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 1,
+                      justifyContent: "center",
+                    }}
+                  >
+                    {pokemonData.abilities.map((ability, index) => (
+                      <Chip
+                        key={index}
+                        label={ability.ability.name}
+                        className="text-capitalize"
+                        sx={{
+                          backgroundColor: "#FFF",
+                          color: "#000",
+                          fontWeight: "bold",
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              </div>
+            </div>
+          </CustomTabPanel>
+
+          <CustomTabPanel value={value} index={1}>
             <ul>
               {pokemonData.stats.map((stat, index) => (
-                <li key={index}>
-                  {stat.stat.name}: {stat.base_stat}
-                </li>
+                <div className="row align-items-center">
+                  <div className="col">
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ color: "text.light" }}
+                      className="text-capitalize"
+                    >
+                      {stat.stat.name}
+                    </Typography>
+                  </div>
+                  <div className="col-8">
+                    <LinearProgress
+                      key={index}
+                      variant="determinate"
+                      value={stat.base_stat}
+                      sx={{
+                        [`& .${linearProgressClasses.bar}`]: {
+                          backgroundColor: getStatColor(stat.base_stat),
+                        },
+                      }}
+                    />
+                  </div>
+                  <div className="col">
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ color: "text.light" }}
+                    >
+                      {stat.base_stat}
+                    </Typography>
+                  </div>
+                </div>
               ))}
             </ul>
-            <p>Movimientos:</p>
-            <ul>
-              {pokemonData.moves.map((move, index) => (
-                <li key={index}>{move.move.name}</li>
+          </CustomTabPanel>
+          <CustomTabPanel value={value} index={2}>
+            <div className="d-flex flex-wrap justify-content-center">
+              {paginatedMoves?.map((move, index) => (
+                <Chip
+                  key={index}
+                  label={move.move.name}
+                  className="m-2"
+                  sx={{ backgroundColor: "white", width: "18%" }}
+                />
               ))}
-            </ul>
-          </div>
+              <Pagination
+                count={Math.ceil(pokemonData.moves.length / movesPerPage)}
+                page={page}
+                onChange={(e, value) => setPage(value)}
+              />
+            </div>
+          </CustomTabPanel>
         </div>
       ) : (
         <p>Cargando datos del Pokémon...</p>
