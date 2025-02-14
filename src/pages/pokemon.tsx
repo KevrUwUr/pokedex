@@ -1,10 +1,11 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Typography from "@mui/material/Typography";
 import { Box, Chip } from "@mui/material";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
+import IconButton from "@mui/material/IconButton";
 import LinearProgress, {
   linearProgressClasses,
 } from "@mui/material/LinearProgress";
@@ -12,13 +13,14 @@ import Pagination from "@mui/material/Pagination";
 import InfoIcon from "@mui/icons-material/Info";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 const Pokemon = () => {
   const url = "https://pokeapi.co/api/v2/pokemon";
   const { id } = useParams<{ id: string }>();
   const [pokemonData, setPokemonData] = useState<PokemonData | null>(null);
   const [sprites, setSprites] = useState<{ key: string; value: string }[]>([]);
-  const [indexAct, setIndexAct] = useState(7);
+  const [indexAct, setIndexAct] = useState(2);
 
   const [page, setPage] = useState(1);
   const movesPerPage = 20;
@@ -160,7 +162,7 @@ const Pokemon = () => {
 
   const [value, setValue] = useState(0);
 
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleChange = (_: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };
 
@@ -218,8 +220,21 @@ const Pokemon = () => {
     page * movesPerPage
   );
 
+  const navigate = useNavigate();
+
   return (
     <div className="App bg-dark text-light p-3 d-flex w-100 h-100">
+      <div className="header">
+        <div className="row">
+          <IconButton
+            onClick={() => {
+              navigate(`/pokedex`);
+            }}
+          >
+            <ArrowBackIcon className="text-light" />
+          </IconButton>
+        </div>
+      </div>
       {pokemonData ? (
         <div className="row w-100">
           <div className="carousel-container d-flex align-items-center">
@@ -288,8 +303,8 @@ const Pokemon = () => {
             </Tabs>
           </Box>
           <CustomTabPanel value={value} index={0}>
-            <div className="row g-1">
-              <div className="col-sm-12 col-md-6 col-lg-6">
+            <div className="row d-flex justify-content-between">
+              <div className="col-sm-12 col-md-4 col-lg-4">
                 <Box
                   sx={{
                     p: 1,
@@ -298,7 +313,7 @@ const Pokemon = () => {
                     textAlign: "center",
                   }}
                 >
-                  <Typography variant="h5" sx={{ color: "text.light"}}>
+                  <Typography variant="h5" sx={{ color: "text.light" }}>
                     Altura
                   </Typography>
                   <Typography
@@ -313,31 +328,7 @@ const Pokemon = () => {
                   </Typography>
                 </Box>
               </div>
-              <div className="col-sm-12 col-md-6 col-lg-6">
-                <Box
-                  sx={{
-                    p: 1,
-                    borderRadius: "16px",
-                    boxShadow: "0 4px 12px rgba(255, 255, 255, 0.1)",
-                    textAlign: "center",
-                  }}
-                >
-                  <Typography variant="h5" sx={{ color: "text.light" }}>
-                    Peso
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      color: "#FFF",
-                      fontWeight: "bold",
-                      fontSize: "1.8rem",
-                    }}
-                  >
-                    {pokemonData.weight / 10} kg
-                  </Typography>
-                </Box>
-              </div>
-              <div className="col-12 p-3">
+              <div className="col-sm-12 col-md-4 col-lg-4">
                 <Box
                   sx={{
                     p: 1,
@@ -376,6 +367,30 @@ const Pokemon = () => {
                       />
                     ))}
                   </Box>
+                </Box>
+              </div>
+              <div className="col-sm-12 col-md-4 col-lg-4">
+                <Box
+                  sx={{
+                    p: 1,
+                    borderRadius: "16px",
+                    boxShadow: "0 4px 12px rgba(255, 255, 255, 0.1)",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="h5" sx={{ color: "text.light" }}>
+                    Peso
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: "#FFF",
+                      fontWeight: "bold",
+                      fontSize: "1.8rem",
+                    }}
+                  >
+                    {pokemonData.weight / 10} kg
+                  </Typography>
                 </Box>
               </div>
             </div>
@@ -419,20 +434,38 @@ const Pokemon = () => {
             </ul>
           </CustomTabPanel>
           <CustomTabPanel value={value} index={2}>
-            <div className="d-flex flex-wrap justify-content-center">
+            <div className="text-center d-flex flex-wrap justify-content-center">
               {paginatedMoves?.map((move, index) => (
                 <Chip
                   key={index}
                   label={move.move.name}
-                  className="m-2"
-                  sx={{ backgroundColor: "white", width: "18%" }}
+                  className="m-2 text-capitalize"
+                  sx={{ backgroundColor: "white" }}
                 />
               ))}
-              <Pagination
-                count={Math.ceil(pokemonData.moves.length / movesPerPage)}
-                page={page}
-                onChange={(e, value) => setPage(value)}
-              />
+              <div className="col-12 d-flex justify-content-center">
+                <Pagination
+                  sx={{
+                    "& .MuiPaginationItem-root": {
+                      color: "white",
+                      backgroundColor: "transparent",
+                      "&:hover": {
+                        backgroundColor: "rgba(255, 255, 255, 0.2)",
+                      },
+                      "&.Mui-selected": {
+                        backgroundColor: "white",
+                        color: "black",
+                        "&:hover": {
+                          backgroundColor: "rgba(255, 255, 255, 0.8)",
+                        },
+                      },
+                    },
+                  }}
+                  count={Math.ceil(pokemonData.moves.length / movesPerPage)}
+                  page={page}
+                  onChange={(_, value) => setPage(value)}
+                />
+              </div>
             </div>
           </CustomTabPanel>
         </div>

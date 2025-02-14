@@ -15,7 +15,7 @@ interface PokeCardProps {
   const formattedNumber = number.toString().padStart(3, "0");
 
   const handleNavigate = () => {
-    navigate(`/pokemon/${number}`);
+    navigate(`/pokedex/pokemon/${number}`);
   };
 
   return (
