@@ -9,7 +9,7 @@ interface PokeCardProps {
   number: number;
   image: string;
 }
- const PokeCard = ({ name, number, image }: PokeCardProps) => {
+const PokeCard = ({ name, number, image }: PokeCardProps) => {
   const navigate = useNavigate();
 
   const formattedNumber = number.toString().padStart(3, "0");
@@ -20,43 +20,47 @@ interface PokeCardProps {
 
   return (
     <Card
-      sx={{ maxWidth: 345 }}
       onClick={handleNavigate}
-      style={{
-        background: "transparent",
-        backdropFilter: "blur(10px)",
-        borderRadius: "8px",
-        boxShadow: "rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px",
+      sx={{
+        bgcolor: "rgba(255, 255, 255, 0.2)",
+        borderRadius: "16px",
+        boxShadow: "0 8px 32px rgba(31, 38, 135, 0.25)",
+        backdropFilter: "blur(12px)",
+        p: 2,
+        transition: "box-shadow 0.3s ease-in-out",
+        "&:hover": {
+          boxShadow: "0 12px 40px rgba(31, 38, 135, 0.35)",
+        },
       }}
-      
     >
       <CardActionArea>
         <CardMedia
           component="img"
           image={image}
-          style={{
-            aspectRatio: "1/1",
-            objectFit: "cover",
-            filter: "drop-shadow(5px 5px 13px #111111)",
+          sx={{
+            width: 96,
+            height: 96,
+            mx: "auto",
+            objectFit: "contain",
+            filter: "drop-shadow(2px 2px 5px rgba(0, 0, 0, 0.3))",
           }}
           alt={`Imagen de ${name}`}
         />
-        <CardContent className="d-flex flex-column align-items-center">
+        <CardContent sx={{ textAlign: "center" }}>
           <Typography
-            gutterBottom
-            variant="h5"
-            component="div"
-            className="text-capitalize"
+            variant="h6"
+            sx={{ fontWeight: "bold", textTransform: "capitalize" }}
           >
             {name}
           </Typography>
-          <Typography variant="h6" sx={{ color: "text.secondary" }}>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
             #{formattedNumber}
           </Typography>
         </CardContent>
       </CardActionArea>
     </Card>
   );
+  
 };
 
 export default PokeCard;
