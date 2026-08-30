@@ -1,4 +1,3 @@
-import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Typography from "@mui/material/Typography";
@@ -14,10 +13,13 @@ import InfoIcon from "@mui/icons-material/Info";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { useGetPokemonByNameQuery } from "../services/pokemon.service";
 
 const Pokemon = () => {
-  const url = "https://pokeapi.co/api/v2/pokemon";
   const { id } = useParams<{ id: string }>();
+  const { data: pokemonFromService, isLoading } = useGetPokemonByNameQuery(id ?? "", {
+    skip: !id,
+  });
   const [pokemonData, setPokemonData] = useState<PokemonData | null>(null);
   const [sprites, setSprites] = useState<{ key: string; value: string }[]>([]);
   const [indexAct, setIndexAct] = useState(2);
@@ -168,52 +170,39 @@ const Pokemon = () => {
 
   const formattedNumber = pokemonData?.id.toString().padStart(3, "0");
 
-  const getPokemonData = async (pokemonId: string) => {
-    try {
-      const response = await axios.get<PokemonData>(`${url}/${pokemonId}`);
-      const data = response.data;
-      setPokemonData(data);
+  useEffect(() => {
+    if (!pokemonFromService) return;
 
-      // Procesar sprites
-      const newSprites: { key: string; value: string }[] = [];
+    setPokemonData(pokemonFromService as PokemonData);
 
-      // Agregar sprites principales
-      Object.entries(data.sprites || {})
-        .filter(([_, value]) => typeof value === "string" && value)
-        .forEach(([key, value]) => {
-          newSprites.push({ key, value: value as string });
-        });
+    const newSprites: { key: string; value: string }[] = [];
 
-      // Agregar sprites de "other"
-      Object.entries(data.sprites.other || {}).forEach(
-        ([groupKey, groupValue]) => {
-          Object.entries(groupValue || {})
-            .filter(([_, value]) => typeof value === "string" && value)
-            .forEach(([key, value]) => {
-              newSprites.push({
-                key: `${groupKey}-${key}`,
-                value: value as string,
-              });
+    Object.entries(pokemonFromService.sprites || {})
+      .filter(([_, value]) => typeof value === "string" && value)
+      .forEach(([key, value]) => {
+        newSprites.push({ key, value: value as string });
+      });
+
+    Object.entries(pokemonFromService.sprites.other || {}).forEach(
+      ([groupKey, groupValue]) => {
+        Object.entries(groupValue || {})
+          .filter(([_, value]) => typeof value === "string" && value)
+          .forEach(([key, value]) => {
+            newSprites.push({
+              key: `${groupKey}-${key}`,
+              value: value as string,
             });
-        }
-      );
+          });
+      }
+    );
 
-      setSprites(newSprites);
-    } catch (error) {
-      console.error("Error fetching Pokémon data:", error);
-    }
-  };
+    setSprites(newSprites);
+  }, [pokemonFromService]);
 
   const ClickCarousel = (movimiento: number) => {
     const newIndex = (indexAct + movimiento + sprites.length) % sprites.length;
     setIndexAct(newIndex);
   };
-
-  useEffect(() => {
-    if (id) {
-      getPokemonData(id);
-    }
-  }, [id]);
 
   const paginatedMoves = pokemonData?.moves.slice(
     (page - 1) * movesPerPage,
@@ -235,7 +224,9 @@ const Pokemon = () => {
           </IconButton>
         </div>
       </div>
-      {pokemonData ? (
+      {isLoading ? (
+        <p>Cargando datos del Pokémon...</p>
+      ) : pokemonData ? (
         <div className="row w-100">
           <div className="carousel-container d-flex align-items-center">
             <button
@@ -470,7 +461,7 @@ const Pokemon = () => {
           </CustomTabPanel>
         </div>
       ) : (
-        <p>Cargando datos del Pokémon...</p>
+        <p>No se encontró el Pokémon.</p>
       )}
     </div>
   );

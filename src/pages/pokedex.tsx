@@ -1,5 +1,4 @@
-import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PokeCard from "../components/pokemonCard";
 import "bootstrap/dist/css/bootstrap.min.css";
 import TextField from "@mui/material/TextField";
@@ -10,6 +9,7 @@ import Checkbox from "@mui/material/Checkbox";
 import Typography from "@mui/material/Typography";
 import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useGetPokemonPageWithDetailsQuery } from "../services/pokemon.service";
 
 const Pokedex = () => {
   interface Pokemon {
@@ -52,87 +52,68 @@ const Pokedex = () => {
     { id: 9, range: "906-1010" },
   ];
 
-  const urlGeneral = "https://pokeapi.co/api/v2/pokemon?limit=1010";
-  const [pokemons, setPokemons] = useState<Pokemon[]>([]);
-  const [filteredPokemons, setFilteredPokemons] = useState<Pokemon[]>([]);
   const [searchTerm, setSearchTerm] = useState<string | null>(null);
   const [types, setTypes] = useState<string[]>([]);
   const [selectedGenerations, setSelectedGenerations] = useState<number[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState<number>(1);
+  const [allPokemons, setAllPokemons] = useState<Pokemon[]>([]);
 
-  const batchRequests = async (
-    pokemons: { name: string }[],
-    batchSize = 10
-  ) => {
-    const detailedPokemons: Pokemon[] = [];
+  const pageSize = 30;
+  const offset = (page - 1) * pageSize;
+  const totalPages = 34;
+  const hasMorePages = page < totalPages;
 
-    for (let i = 0; i < pokemons.length; i += batchSize) {
-      const batch = pokemons.slice(i, i + batchSize);
-      const batchResults = await Promise.all(
-        batch.map(async (pokemon) => {
-          try {
-            const details = await axios.get(
-              `https://pokeapi.co/api/v2/pokemon/${pokemon.name}`
-            );
-            return {
-              name: details.data.name,
-              id: details.data.id,
-              types: details.data.types.map(
-                (type: { type: { name: string } }) => type.type.name
-              ),
-              image:
-                details.data.sprites.front_default ||
-                details.data.sprites.other["official-artwork"].front_default,
-            };
-          } catch {
-            return null;
-          }
-        })
+  const {
+    data: pagePokemons = [],
+    isLoading: loading,
+    isFetching,
+    error,
+  } = useGetPokemonPageWithDetailsQuery({ limit: pageSize, offset });
+
+  useEffect(() => {
+    if (!pagePokemons.length) return;
+
+    setAllPokemons((prev) => {
+      const existingIds = new Set(prev.map((pokemon) => pokemon.id));
+      const newPokemons = pagePokemons.filter(
+        (pokemon) => !existingIds.has(pokemon.id)
       );
 
-      detailedPokemons.push(...batchResults.filter((p) => p !== null));
+      return page === 1 ? pagePokemons : [...prev, ...newPokemons];
+    });
+  }, [pagePokemons, page]);
 
-      await new Promise((resolve) => setTimeout(resolve, 100));
+  const filteredPokemons = useMemo(() => {
+    let result = [...allPokemons];
+
+    const term = searchTerm?.trim().toLowerCase() ?? "";
+    if (term) {
+      result = result.filter(
+        (pokemon) =>
+          pokemon.name.toLowerCase().includes(term) ||
+          pokemon.id.toString().includes(term)
+      );
     }
 
-    return detailedPokemons;
-  };
-
-  const getPokemons = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await axios.get(`${urlGeneral}`);
-      const results = response.data.results;
-
-      const detailedPokemons = await batchRequests(results, 10);
-      setPokemons(detailedPokemons.sort((a, b) => a.id - b.id));
-      setFilteredPokemons(detailedPokemons.sort((a, b) => a.id - b.id));
-    } catch (err) {
-      console.error("Error al obtener los datos de los Pokémon:", err);
-      setError("Error al cargar los Pokémon. Intenta de nuevo.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSearch = (searchTerm: string | null) => {
-    const term = searchTerm?.trim() || "";
-    if (!term) {
-      setFilteredPokemons(pokemons);
-      return;
+    if (types.length > 0) {
+      result = result.filter((pokemon) =>
+        types.every((type) => pokemon.types.includes(type))
+      );
     }
 
-    const lowercasedTerm = term.toLowerCase();
-    const searchFiltered = pokemons.filter(
-      (pokemon) =>
-        pokemon.name.toLowerCase().includes(lowercasedTerm) ||
-        pokemon.id.toString().includes(lowercasedTerm)
-    );
+    if (selectedGenerations.length > 0) {
+      result = result.filter((pokemon) =>
+        selectedGenerations.some((generationId) => {
+          const generation = generations[generationId - 1];
+          if (!generation) return false;
+          const [start, end] = generation.range.split("-").map(Number);
+          return pokemon.id >= start && pokemon.id <= end;
+        })
+      );
+    }
 
-    setFilteredPokemons(searchFiltered);
-  };
+    return result;
+  }, [allPokemons, searchTerm, types, selectedGenerations]);
 
   const handleTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { checked, value } = event.target;
@@ -154,39 +135,9 @@ const Pokedex = () => {
     );
   };
 
-  const applyFilters = () => {
-    let filtered = [...pokemons];
-
-    // Filtrar por tipos
-    if (types.length > 0) {
-      filtered = filtered.filter((pokemon) =>
-        types.every((type) => pokemon.types.includes(type))
-      );
-    }
-
-    // Filtrar por generaciones
-    if (selectedGenerations.length > 0) {
-      filtered = filtered.filter((pokemon) => {
-        const gen = selectedGenerations.find((gen: number) => {
-          const [start, end] = generations[gen - 1].range
-            .split("-")
-            .map(Number);
-          return pokemon.id >= start && pokemon.id <= end;
-        });
-        return gen !== undefined;
-      });
-    }
-
-    setFilteredPokemons(filtered);
-  };
-
   useEffect(() => {
-    handleSearch(searchTerm);
-  }, [searchTerm]);
-
-  useEffect(() => {
-    getPokemons();
-  }, []);
+    setPage(1);
+  }, [searchTerm, types, selectedGenerations]);
 
   return (
     <div className="App bg-light">
@@ -294,28 +245,10 @@ const Pokedex = () => {
                     ))}
                   </div>
                 </FormGroup>
-            <Button
-              variant="contained"
-              color="primary"
-              size="medium"
-              onClick={applyFilters}
-              sx={{
-                marginTop: 2,
-                borderRadius: "8px",
-                padding: "8px 16px",
-                fontSize: "16px",
-                boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
-                "&:hover": {
-                  backgroundColor: "#3e8e41",
-                },
-              }}
-            >
-              Aplicar filtros
-            </Button>
               </AccordionDetails>
             </Accordion>
 
-            {/* Fin filtros */}
+
             <div className="row g-2">
               {filteredPokemons.length > 0 ? (
                 filteredPokemons.map((pokemon) => (
@@ -330,6 +263,28 @@ const Pokedex = () => {
               ) : (
                 <p>No se encontraron Pokémon.</p>
               )}
+            <div className="d-flex justify-content-center mt-4 mb-3">
+              {hasMorePages && (
+                <Button
+                  variant="contained"
+                  onClick={() => setPage((current) => current + 1)}
+                  disabled={isFetching}
+                  sx={{
+                    borderRadius: "999px",
+                    px: 4,
+                    py: 1.2,
+                    fontWeight: 700,
+                    backgroundColor: "#590209",
+                    color: "#fff",
+                    "&:hover": {
+                      backgroundColor: "#7a0f18",
+                    },
+                  }}
+                >
+                  {isFetching ? "Cargando..." : "Ver más"}
+                </Button>
+              )}
+            </div>
             </div>
           </>
         )}
